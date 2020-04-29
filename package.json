@@ -1,0 +1,32 @@
+{
+  "name": "verge",
+  "version": "1.0.0",
+  "description": "A Courier Service",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon node index",
+    "test": "mocha 'test/index.js' --exit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TundeW/Verge.git"
+  },
+  "author": "Bello Waheed Babatunde",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TundeW/Verge/issues"
+  },
+  "homepage": "https://github.com/TundeW/Verge#readme",
+  "dependencies": {
+    "@hapi/joi": "^17.1.1",
+    "body-parser": "^1.19.0",
+    "chai": "^4.2.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mocha": "^7.1.1",
+    "nodemon": "^2.0.3",
+    "pg": "^8.0.3",
+    "supertest": "^4.0.2"
+  }
+}
