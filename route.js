@@ -164,6 +164,8 @@ router.put(
             await authenticationnByToken(token, req);
             await authorisationById(req.user._id, "NO")
             await parcelauthorisation(req.params.id, req.user._id);
+            const thisFunction = "Change the Destination"
+            await checkParcelStatus(req.params.id, thisFunction);
         } catch (e) {
             return res.status(e.code).json(e);
         }
