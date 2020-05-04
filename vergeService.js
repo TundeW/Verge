@@ -1,11 +1,12 @@
 const queries = require("./query");
 const db = require("./database");
+const moment = require("moment");
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
 
 
-async function createNewUser(is_admin, body) {
+async function createNewUser(type, body) {
     const {
         first_name,
         last_name,
@@ -13,10 +14,12 @@ async function createNewUser(is_admin, body) {
         password,
         state
     } = body;
+    const d = new Date();
+    const created_at = moment(d).format("YYYY-MM-DD HH:mm:ss");
 
     const queryObj = {
         text: queries.addNewUser,
-        values: [first_name, last_name, email, password, state, is_admin],
+        values: [first_name, last_name, email, password, state, type, created_at, created_at],
     };
 
     try{
@@ -60,7 +63,7 @@ async function checkIfUserDoesNotExistBefore(email){
         if (rowCount > 0) {
             return Promise.reject({
                 status: "error",
-                code: 500,
+                code: 409,
                 message: "Email Already Exists",
             });
         }
@@ -85,8 +88,8 @@ async function checkIfEmailAndPasswordMatch(body){
         const { rows, rowCount } = await db.query(queryObj);
         if (rowCount == 0){
             return Promise.reject({
-                status: "forbidden",
-                code: 403,
+                status: "bad request",
+                code: 400,
                 message: "The username and password combination you entered doesn't belong to a user.",
             });
         }
@@ -96,7 +99,9 @@ async function checkIfEmailAndPasswordMatch(body){
                 status: "success",
                 code: 200,
                 message: "Login Successful...",
-                id: rows[0].id,
+                user: {
+                    id: rows[0].id
+                },
             });
         }
 
@@ -120,11 +125,13 @@ async function createNewParcel(user_id, body){
         sender_name,
         sender_note,
     } = body;
-    const status = "Pending";
+    const status = "pending";
+    const d = new Date();
+    const created_at = moment(d).format("YYYY-MM-DD HH:mm:ss");
 
     const queryObj={
         text: queries.addNewParcel,
-        values: [user_id, price, weight, location, destination, sender_name, sender_note, status]
+        values: [user_id, price, weight, location, destination, sender_name, sender_note, status, created_at, created_at]
     }
 
     try{
@@ -140,7 +147,7 @@ async function createNewParcel(user_id, body){
         if (rowCount > 0){
             return Promise.resolve({
                 status: "success",
-                code: 200,
+                code: 201,
                 message: "Parcel Delivery Order created successfully"
             });
         }
@@ -187,36 +194,39 @@ async function authenticationById(id){
 
 async function authorisationById(id, role){
     const queryObj = {
-        text: queries.selectIsadminById,
+        text: queries.selectTypeById,
         values: [id],
     }
 
     try{
         const { rows, rowCount } = await db.query(queryObj);
-        if (rows[0].is_admin == role){
+        if (rows[0].type == role){
             return Promise.resolve();
         }
 
-        if (rows[0].is_admin != role) {
+        if (rows[0].type != role) {
             return Promise.reject({
-                status: "unauthorised",
-                code: 401,
+                status: "forbidden",
+                code: 403,
                 message: "This user is not authorised to carry out this function",
             })
         }
     } catch(e) {
+        console.log(e)
         return Promise.reject({
             status: "error",
             code: 500,
-            message: "Error authenticating user",
+            message: "Error authorizing user",
         })
     }
 }
 
 async function changeDestination(id, destination){
+    const d = new Date();
+    const updated_at = moment(d).format("YYYY-MM-DD HH:mm:ss");
     const queryObj = {
         text: queries.updateDestinationById,
-        values: [destination, id],
+        values: [destination, id, updated_at],
     }
 
     try{
@@ -306,7 +316,7 @@ async function checkParcelStatus(id_parcel, thisFunction){
         }
 
         if (rows[0].status.toLowerCase() != "delivered" && rows[0].status.toLowerCase() != "cancelled") {
-            console.log(rows[0].status.toLowerCase())
+            // console.log(rows[0].status.toLowerCase())
             return Promise.resolve();
         }
     } catch (e) {
@@ -321,9 +331,11 @@ async function checkParcelStatus(id_parcel, thisFunction){
 
 
 async function changeStatus (id, status, thisMessage) {
+    const d = new Date();
+    const updated_at = moment(d).format("YYYY-MM-DD HH:mm:ss");
     const queryObj = {
         text: queries.updateStatusById,
-        values: [status, id],
+        values: [status.toLowerCase(), id, updated_at],
     }
 
     try{
@@ -353,9 +365,11 @@ async function changeStatus (id, status, thisMessage) {
 }
 
 async function changeLocation (id, location) {
+    const d = new Date();
+    const updated_at = moment(d).format("YYYY-MM-DD HH:mm:ss");
     const queryObj = {
         text: queries.updateLocationById,
-        values: [location, id],
+        values: [location, id, updated_at],
     }
 
     try{
@@ -394,7 +408,7 @@ async function getAllParcels() {
             status: "success",
             code: 200,
             message: "Successfully fetched all Parcels",
-            parcels: rows,
+            data: rows,
         });
     } catch (e) {
         return Promise.reject({
@@ -438,7 +452,7 @@ async function getParcelsByUserAndParcelId(user_id, parcel_id) {
             status: "success",
             code: 200,
             message: "Successfully fetched all Parcels",
-            data: rows,
+            data: rows[0],
         });
     } catch (e) {
         return Promise.reject({
@@ -463,7 +477,7 @@ async function authenticationnByToken(token, req){
     try{
         const verified = jwt.verify(token, process.env.TOKEN_SECRET);
         req.user = verified;
-        console.log(req.user)
+        // console.log(req.user)
     } catch (e) {
         console.log(e);
         return Promise.reject({

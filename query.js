@@ -6,8 +6,10 @@ const queries = {
         email,
         password,
         state,
-        is_admin
-    ) VALUES($1, $2, $3, crypt( $4, gen_salt('bf')), $5, $6) RETURNING *`,
+        type,
+        created_at,
+        updated_at
+    ) VALUES($1, $2, $3, crypt( $4, gen_salt('bf')), $5, $6, $7, $8) RETURNING *`,
 
     findUserByEmail:`
     SELECT * FROM users WHERE email=($1)
@@ -26,15 +28,17 @@ const queries = {
         destination,
         sender_name,
         sender_note,
-        status
-    ) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        status,
+        created_at,
+        updated_at
+    ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
 
-    selectIsadminById:`
-    SELECT is_admin FROM users where id=($1)
+    selectTypeById:`
+    SELECT type FROM users where id=($1)
     `,
 
     updateDestinationById:`
-    UPDATE parcels SET destination=($1) WHERE id=($2)
+    UPDATE parcels SET destination=($1), updated_at=($3) WHERE id=($2)
     `,
 
     findUserIdByParcelId:`
@@ -46,11 +50,11 @@ const queries = {
     `,
 
     updateStatusById: `
-    UPDATE parcels SET status=($1) WHERE id=($2)
+    UPDATE parcels SET status=($1), updated_at=($3) WHERE id=($2)
     `,
 
     updateLocationById: `
-    UPDATE parcels SET location=($1) WHERE id=($2)
+    UPDATE parcels SET location=($1), updated_at=($3) WHERE id=($2)
     `,
 
     findAllParcels: `

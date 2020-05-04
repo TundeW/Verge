@@ -27,12 +27,20 @@ const loginValidation = (data) =>{
 
 const parcelValidation = (data) =>{
     const schema = Joi.object({
-        price: Joi.number().min(2).required(),
-        weight: Joi.number().min(2).required(),
+        price: Joi.number().integer().min(2).required(),
+        weight: Joi.number().integer().min(2).required(),
         location: Joi.string().min(2).required(),
         destination: Joi.string().min(2).required(),
         sender_name: Joi.string().min(2).required(),
         sender_note: Joi.string().min(2).required()
+    });
+
+    return schema.validate(data);
+}
+
+const statusValidation = (data) =>{
+    const schema = Joi.object({
+        status: Joi.string().valid('pending','ongoing','cancelled','delivered').required(),
     });
 
     return schema.validate(data);
@@ -44,3 +52,4 @@ const parcelValidation = (data) =>{
 module.exports.signupValidation = signupValidation;
 module.exports.loginValidation = loginValidation;
 module.exports.parcelValidation = parcelValidation;
+module.exports.statusValidation = statusValidation;

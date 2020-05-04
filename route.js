@@ -1,5 +1,5 @@
 const express = require("express");
-const { signupValidation, loginValidation, parcelValidation } = require('./validation')
+const { signupValidation, loginValidation, parcelValidation, statusValidation } = require('./validation')
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -44,10 +44,10 @@ router.post(
     },
     async (req, res) => {
         const { email } = req.body;
-        const is_admin = "NO";
+        const type = "user";
         try{
             await checkIfUserDoesNotExistBefore(email);
-            const result = await createNewUser(is_admin, req.body);
+            const result = await createNewUser(type, req.body);
             return res.status(201).json(result);
         } catch(e) {
             return res.status(e.code).json(e);
@@ -68,10 +68,10 @@ router.post(
     },
     async (req, res) => {
         const { email } = req.body;
-        const is_admin = "YES";
+        const type = "superadmin";
         try{
             await checkIfUserDoesNotExistBefore(email);
-            const result = await createNewUser(is_admin, req.body);
+            const result = await createNewUser(type, req.body);
             return res.status(201).json(result);
         } catch(e) {
             return res.status(e.code).json(e);
@@ -93,8 +93,9 @@ router.post(
     async (req, res) => {
         try{
             const result = await checkIfEmailAndPasswordMatch(req.body);
-            const token = jwt.sign({_id: result.id}, process.env.TOKEN_SECRET);
-            res.header('auth', token).json({...result, token});
+            console.log("apple + " + result.user.id);
+            const token = jwt.sign({_id: result.user.id}, process.env.TOKEN_SECRET);
+            res.header('auth', token).json({...result, data: {token}});
 
             // return res.status(200).json(result);
         } catch (e) {
@@ -120,7 +121,7 @@ router.post(
         const token = auth;
         try {
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "NO")
+            await authorisationById(req.user._id, "user")
 
         } catch(e) {
             return res.status(e.code).json(e);
@@ -162,7 +163,7 @@ router.put(
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "NO")
+            await authorisationById(req.user._id, "user")
             await parcelauthorisation(req.params.id, req.user._id);
             const thisFunction = "Change the Destination"
             await checkParcelStatus(req.params.id, thisFunction);
@@ -191,7 +192,7 @@ router.put(
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "NO")
+            await authorisationById(req.user._id, "user")
             await parcelauthorisation(req.params.id, req.user._id);
             const thisFunction = "Cancel"
             await checkParcelStatus(req.params.id, thisFunction);
@@ -202,7 +203,7 @@ router.put(
     },
     async (req, res) => {
         const { id } = req.params;
-        const status = "Cancelled";
+        const status = "cancelled";
 
         try {
             const thisMessage = "Delivery Order Cancelled Successfully";
@@ -220,18 +221,10 @@ router.put(
 router.put(
     "/parcel/status/change/:id",
     (req, res, next) => {
-        const { status } = req.body;
-        const { auth } = req.headers;
-        const token = auth;
-        if(!status){
+        const { error } = statusValidation(req.body);
+        if(error) {
             return res.status(400).json({
-                message: "Please Provide a value for Status",
-            })
-        }
-
-        if(!token){
-            return res.status(401).json({
-                message: "You are not authorised on this platform",
+                message: error.details[0].message
             })
         }
         next();
@@ -241,7 +234,7 @@ router.put(
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "YES")
+            await authorisationById(req.user._id, "admin")
             const thisFunction = "Change the Status"
             await checkParcelStatus(req.params.id, thisFunction);
         } catch(e) {
@@ -291,7 +284,7 @@ router.put(
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "YES")
+            await authorisationById(req.user._id, "admin")
             const thisFunction = "Change the Location"
             await checkParcelStatus(req.params.id, thisFunction);
         } catch(e) {
@@ -322,7 +315,7 @@ router.get(
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "YES")
+            await authorisationById(req.user._id, "admin")
         } catch(e) {
             return res.status(e.code).json(e);
         }
@@ -374,7 +367,7 @@ router.get(
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "NO")
+            await authorisationById(req.user._id, "user")
         } catch(e) {
             return res.status(e.code).json(e);
         }
@@ -395,11 +388,13 @@ router.get(
 router.get(
     "/parcel/:id",
     async (req, res, next) =>{
+        const { id } = req.params;
         const { auth } = req.headers;
         const token = auth;
         try{
             await authenticationnByToken(token, req);
-            await authorisationById(req.user._id, "NO")
+            await authorisationById(req.user._id, "user")
+            await parcelauthorisation(req.params.id, req.user._id);
         } catch(e) {
             return res.status(e.code).json(e);
         }
