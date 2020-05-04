@@ -66,9 +66,21 @@ router.post(
         }
         next();
     },
+    async (req, res, next) =>{
+        const { auth } = req.headers;
+        const token = auth;
+        try {
+            await authenticationnByToken(token, req);
+            await authorisationById(req.user._id, "superadmin")
+
+        } catch(e) {
+            return res.status(e.code).json(e);
+        }
+        next();
+    },
     async (req, res) => {
         const { email } = req.body;
-        const type = "superadmin";
+        const type = "admin";
         try{
             await checkIfUserDoesNotExistBefore(email);
             const result = await createNewUser(type, req.body);
