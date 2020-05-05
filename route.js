@@ -105,9 +105,10 @@ router.post(
     async (req, res) => {
         try{
             const result = await checkIfEmailAndPasswordMatch(req.body);
-            console.log("apple + " + result.user.id);
-            const token = jwt.sign({_id: result.user.id}, process.env.TOKEN_SECRET);
-            res.header('auth', token).json({...result, data: {token}});
+            console.log("apple + " + result.data.user.id);
+            const token = jwt.sign({_id: result.data.user.id}, process.env.TOKEN_SECRET);
+
+            res.header('auth', token).json({...result, data: {token, ...result.data}});
 
             // return res.status(200).json(result);
         } catch (e) {

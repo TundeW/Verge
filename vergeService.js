@@ -99,8 +99,10 @@ async function checkIfEmailAndPasswordMatch(body){
                 status: "success",
                 code: 200,
                 message: "Login Successful...",
-                user: {
-                    id: rows[0].id
+                data: {
+                    user: {
+                        id: rows[0].id
+                    }
                 },
             });
         }
