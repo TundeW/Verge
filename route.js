@@ -31,7 +31,7 @@ router.post(
         const { error } = signupValidation(req.body);
         if(error) {
             return res.status(400).json({
-                message: error.details[0].message
+                message: error.details[0].message.replace(/[\"]/gi, "")
             })
         }
         // const { first_name, last_name, email, password, state} = req.body;
@@ -61,7 +61,7 @@ router.post(
         const { error } = signupValidation(req.body);
         if(error) {
             return res.status(400).json({
-                message: error.details[0].message
+                message: error.details[0].message.replace(/[\"]/gi, "")
             })
         }
         next();
@@ -97,7 +97,7 @@ router.post(
         const { error } = loginValidation(req.body);
         if(error) {
             return res.status(400).json({
-                message: error.details[0].message
+                message: error.details[0].message.replace(/[\"]/gi, "")
             })
         }
         next();
@@ -124,7 +124,7 @@ router.post(
         const { error } = parcelValidation(req.body);
         if(error) {
             return res.status(400).json({
-                message: error.details[0].message
+                message: error.details[0].message.replace(/[\"]/gi, "")
             })
         }
         next();
@@ -237,7 +237,7 @@ router.put(
         const { error } = statusValidation(req.body);
         if(error) {
             return res.status(400).json({
-                message: error.details[0].message
+                message: error.details[0].message.replace(/[\"]/gi, "")
             })
         }
         next();
